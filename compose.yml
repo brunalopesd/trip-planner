@@ -1,0 +1,57 @@
+
+services:
+  mailpit:
+      image: axllent/mailpit:latest
+      restart: unless-stopped
+      volumes:
+        - mailpit:/data
+      ports:
+        - 1025:1025
+        - 8025:8025
+      environment:
+        MP_DATABASE: /data/mailpit.db
+  db:
+    image: "postgres:latest"
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: ${PLANNER_DATABASE_USER}
+      POSTGRES_DB: ${PLANNER_DATABASE_NAME}
+      POSTGRES_PASSWORD: ${PLANNER_DATABASE_PASSWORD}
+    volumes:
+      - db:/var/lib/postgresql/data
+
+# pgadmin:
+#     image: dpage/pgadmin4:latest
+#     restart: unless-stopped
+#     depends_on:
+#       - db
+#     environment:
+#       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+#       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-password}
+#     ports:
+#       - 8081:80
+#     volumes:
+#       - pgadmin:/var/lib/pgadmin
+
+  app:
+    build: .
+    ports:
+      - 8080:8080
+    environment:
+      PLANNER_DATABASE_HOST: ${PLANNER_DATABASE_HOST_DOCKER:-db}
+      PLANNER_DATABASE_PORT: ${PLANNER_DATABASE_PORT:-5432}
+      PLANNER_DATABASE_NAME: ${PLANNER_DATABASE_NAME}
+      PLANNER_DATABASE_USER: ${PLANNER_DATABASE_USER}
+      PLANNER_DATABASE_PASSWORD: ${PLANNER_DATABASE_PASSWORD}
+    depends_on:
+      - db
+
+volumes:
+  db:
+    driver: local
+  mailpit:
+    driver: local
+  # pgadmin:
+  #   driver: local
